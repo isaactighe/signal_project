@@ -4,14 +4,14 @@ import java.util.Random;
 
 import com.cardio_generator.outputs.OutputStrategy;
 
-public class AlertGenerator implements PatientDataGenerator {
+public class AlertStateGenerator implements PatientDataGenerator {
     // random generator should not be public
     // should also user upper snake case:
     private static final Random RANDOM_GENERATOR = new Random();
     // AlertStates must be lower camel case
     private boolean[] alertStates; // false = resolved, true = pressed
 
-    public AlertGenerator(int patientCount) {
+    public AlertStateGenerator(int patientCount) {
         alertStates = new boolean[patientCount + 1];
     }
 
