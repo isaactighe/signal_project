@@ -10,7 +10,7 @@ import com.data_management.Patient;
  * it against specific health criteria.
  */
 public class AlertGenerator {
-    private DataStorage dataStorage;
+    private final DataStorage dataStorage;
 
     /**
      * Constructs an {@code AlertGenerator} with a specified {@code DataStorage}.
