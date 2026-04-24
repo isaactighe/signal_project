@@ -1,7 +1,10 @@
 package com.alerts;
 
+import java.util.List;
+
 import com.data_management.DataStorage;
 import com.data_management.Patient;
+import com.data_management.PatientRecord;
 
 /**
  * The {@code AlertGenerator} class is responsible for monitoring patient data
@@ -35,7 +38,68 @@ public class AlertGenerator {
      * @param patient the patient data to evaluate for alert conditions
      */
     public void evaluateData(Patient patient) {
-        // Implementation goes here
+        long endTime = System.currentTimeMillis();
+        long startTime = endTime - (24 * 60 * 60 * 1000);
+        List<PatientRecord> records = dataStorage.getRecords(patient.getPatientId(), startTime, endTime);
+        checkBloodPressureAlerts(patient, records);
+        checkHeartRateAlerts(patient, records);
+        checkOxygenSaturationAlerts(patient, records);
+    }
+
+    private void checkOxygenSaturationAlerts(Patient patient, List<PatientRecord> records) {
+        List<PatientRecord> saturation = records.stream().filter(r -> r.getRecordType().equals("Saturation")).toList();
+        for (PatientRecord r : saturation) {
+            if (r.getMeasurementValue() < 92) {
+                triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Low Oxygen Saturation", r.getTimestamp()));
+            }
+        }
+    }
+
+    private void checkBloodPressureAlerts(Patient patient, List<PatientRecord> records) {
+        List<PatientRecord> systolic = records.stream().filter(r -> r.getRecordType().equals("SystolicBP")).toList();
+        List<PatientRecord> diastolic = records.stream().filter(r -> r.getRecordType().equals("DiastolicBP")).toList();
+
+        for (PatientRecord r : systolic) {
+            if (r.getMeasurementValue() > 180 || r.getMeasurementValue() < 90) {
+                triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Critical Systolic Blood Pressure", r.getTimestamp()));
+            }
+        }
+        for (PatientRecord r : diastolic) {
+            if (r.getMeasurementValue() > 120 || r.getMeasurementValue() < 60) {
+                triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Critical Diastolic Blood Pressure", r.getTimestamp()));
+            }
+        }
+
+        evaluateTrend(patient, systolic, "Systolic Blood Pressure Trend");
+        evaluateTrend(patient, diastolic, "Diastolic Blood Pressure Trend");
+
+    }
+
+    private void evaluateTrend(Patient patient, List<PatientRecord> specificRecords, String conditionName) {
+        if (specificRecords.size() >= 3) {
+            for (int i = 0; i <= specificRecords.size() - 3; i++) {
+
+                double v1 = specificRecords.get(i).getMeasurementValue();
+                double v2 = specificRecords.get(i+1).getMeasurementValue();
+                double v3 = specificRecords.get(i+2).getMeasurementValue();
+
+                boolean increasing = (v2 - v1 > 10 && v3 - v2 > 10);
+                boolean decreasing = (v1 - v2 > 10 && v2 - v3 > 10);
+
+                if ( increasing || decreasing) {
+                    triggerAlert(new Alert(String.valueOf(patient.getPatientId()), conditionName, specificRecords.get(i+2).getTimestamp()));
+                }
+            }
+        }
+    }
+
+    private void checkHeartRateAlerts(Patient patient, List<PatientRecord> records) {
+        List<PatientRecord> hrRecords = records.stream().filter(r -> r.getRecordType().equals("HeartRate")).toList();
+        for (PatientRecord r : hrRecords) {
+            if (r.getMeasurementValue() > 100 || r.getMeasurementValue() < 50) {
+                triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Abnormal heart rate", r.getTimestamp()));
+            }
+        }
     }
 
     /**
@@ -47,6 +111,6 @@ public class AlertGenerator {
      * @param alert the alert object containing details about the alert condition
      */
     private void triggerAlert(Alert alert) {
-        // Implementation might involve logging the alert or notifying staff
+        System.out.println("ALERT TRIGGERED: " + alert.getCondition() + " for Patient " + alert.getPatientId());
     }
 }
