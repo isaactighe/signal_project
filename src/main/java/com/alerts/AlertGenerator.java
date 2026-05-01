@@ -1,6 +1,8 @@
 package com.alerts;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.data_management.DataStorage;
 import com.data_management.Patient;
@@ -44,20 +46,42 @@ public class AlertGenerator {
         checkBloodPressureAlerts(patient, records);
         checkHeartRateAlerts(patient, records);
         checkOxygenSaturationAlerts(patient, records);
+        checkHypotensiveHypoxemia(patient, records);
+        checkECGAlerts(patient, records);
+        checkManualAlerts(patient, records);
     }
 
     private void checkOxygenSaturationAlerts(Patient patient, List<PatientRecord> records) {
-        List<PatientRecord> saturation = records.stream().filter(r -> r.getRecordType().equals("Saturation")).toList();
+        List<PatientRecord> saturation = records.stream().filter(r -> r.getRecordType().equals("Saturation")).collect(Collectors.toList());
+
         for (PatientRecord r : saturation) {
             if (r.getMeasurementValue() < 92) {
                 triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Low Oxygen Saturation", r.getTimestamp()));
             }
         }
+
+        checkRapidSaturationDrop(patient, saturation);
+    }
+
+    private void checkRapidSaturationDrop(Patient patient, List<PatientRecord> saturation) {
+        long tenMinutesMs = 10 * 60 * 1000;
+
+        for (int i = 0; i < saturation.size() - 1; i++) {
+            PatientRecord current = saturation.get(i);
+            PatientRecord next = saturation.get(i + 1);
+
+            long timeDiff = next.getTimestamp() - current.getTimestamp();
+            double saturationDrop = current.getMeasurementValue() - next.getMeasurementValue();
+
+            if (timeDiff <= tenMinutesMs && saturationDrop >= 5) {
+                triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Rapid Oxygen Saturation Drop", next.getTimestamp()));
+            }
+        }
     }
 
     private void checkBloodPressureAlerts(Patient patient, List<PatientRecord> records) {
-        List<PatientRecord> systolic = records.stream().filter(r -> r.getRecordType().equals("SystolicBP")).toList();
-        List<PatientRecord> diastolic = records.stream().filter(r -> r.getRecordType().equals("DiastolicBP")).toList();
+        List<PatientRecord> systolic = records.stream().filter(r -> r.getRecordType().equals("SystolicBP")).collect(Collectors.toList());
+        List<PatientRecord> diastolic = records.stream().filter(r -> r.getRecordType().equals("DiastolicBP")).collect(Collectors.toList());
 
         for (PatientRecord r : systolic) {
             if (r.getMeasurementValue() > 180 || r.getMeasurementValue() < 90) {
@@ -94,10 +118,54 @@ public class AlertGenerator {
     }
 
     private void checkHeartRateAlerts(Patient patient, List<PatientRecord> records) {
-        List<PatientRecord> hrRecords = records.stream().filter(r -> r.getRecordType().equals("HeartRate")).toList();
+        List<PatientRecord> hrRecords = records.stream().filter(r -> r.getRecordType().equals("HeartRate")).collect(Collectors.toList());
         for (PatientRecord r : hrRecords) {
             if (r.getMeasurementValue() > 100 || r.getMeasurementValue() < 50) {
                 triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Abnormal heart rate", r.getTimestamp()));
+            }
+        }
+    }
+
+    private void checkHypotensiveHypoxemia(Patient patient, List<PatientRecord> records) {
+        List<PatientRecord> systolic = records.stream().filter(r -> r.getRecordType().equals("SystolicBP")).collect(Collectors.toList());
+        List<PatientRecord> saturation = records.stream().filter(r -> r.getRecordType().equals("Saturation")).collect(Collectors.toList());
+
+        for (PatientRecord bpRecord : systolic) {
+            if (bpRecord.getMeasurementValue() < 90) {
+                for (PatientRecord satRecord : saturation) {
+                    if (satRecord.getMeasurementValue() < 92) {
+                        triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Hypotensive Hypoxemia Alert", satRecord.getTimestamp()));
+                    }
+                }
+            }
+        }
+    }
+
+    private void checkECGAlerts(Patient patient, List<PatientRecord> records) {
+        List<PatientRecord> ecgRecords = new ArrayList<>();
+        for (PatientRecord r : records) {
+            if (r.getRecordType().equals("ECG")) {
+                ecgRecords.add(r);
+            }
+        }
+
+        for (int i = 5; i < ecgRecords.size(); i++) {
+            double avg = 0;
+            for (int j = i - 5; j < i; j++) {
+                avg += ecgRecords.get(j).getMeasurementValue();
+            }
+            avg /= 5;
+
+            if (ecgRecords.get(i).getMeasurementValue() > avg * 1.5) {
+                triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Abnormal ECG Peak", ecgRecords.get(i).getTimestamp()));
+            }
+        }
+    }
+
+    private void checkManualAlerts(Patient patient, List<PatientRecord> records) {
+        for (PatientRecord r : records) {
+            if (r.getRecordType().equals("Alert")) {
+                triggerAlert(new Alert(String.valueOf(patient.getPatientId()), "Manual Alert Triggered", r.getTimestamp()));
             }
         }
     }
