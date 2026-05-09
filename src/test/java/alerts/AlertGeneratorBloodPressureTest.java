@@ -1,12 +1,16 @@
 package alerts;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import com.alerts.strategies.AlertStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.alerts.AlertGenerator;
 import com.data_management.DataStorage;
 import com.data_management.Patient;
+
+import java.util.List;
 
 class AlertGeneratorBloodPressureTest {
     private DataStorage dataStorage;
@@ -16,8 +20,16 @@ class AlertGeneratorBloodPressureTest {
 
     @BeforeEach
     void setUp() {
-        dataStorage = new DataStorage();
-        alertGenerator = new AlertGenerator(dataStorage);
+        dataStorage = DataStorage.getInstance();
+
+        List<AlertStrategy> strategies = List.of(
+                new com.alerts.strategies.BloodPressureStrategy(),
+                new com.alerts.strategies.HeartRateStrategy(),
+                new com.alerts.strategies.OxygenSaturationStrategy()
+        );
+
+        alertGenerator = new AlertGenerator(strategies);
+
         testPatient = new Patient(PATIENT_ID);
     }
 
