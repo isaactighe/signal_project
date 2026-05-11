@@ -5,6 +5,7 @@ import org.java_websocket.server.WebSocketServer;
 
 import java.net.InetSocketAddress;
 
+// starts a websocket server that broadcasts patient data to anyone who connects
 public class WebSocketOutputStrategy implements OutputStrategy {
 
     private WebSocketServer server;
@@ -17,8 +18,17 @@ public class WebSocketOutputStrategy implements OutputStrategy {
 
     @Override
     public void output(int patientId, long timestamp, String label, String data) {
+        // drop incomplete records before they reach clients — an empty label or value
+        // would break the parser on the receiving end
+        if (label == null || label.isBlank() || data == null || data.isBlank()) {
+            System.err.println("Dropping incomplete record for patient " + patientId);
+            return;
+        }
+
+        // format matches what WebSocketDataReader expects: id,timestamp,label,value
         String message = String.format("%d,%d,%s,%s", patientId, timestamp, label, data);
-        // Broadcast the message to all connected clients
+
+        // send to every connected client — getConnections() is a live snapshot
         for (WebSocket conn : server.getConnections()) {
             conn.send(message);
         }
@@ -42,7 +52,7 @@ public class WebSocketOutputStrategy implements OutputStrategy {
 
         @Override
         public void onMessage(WebSocket conn, String message) {
-            // Not used in this context
+            // server doesn't expect messages from clients, nothing to do here
         }
 
         @Override

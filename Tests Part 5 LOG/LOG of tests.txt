@@ -1,0 +1,42 @@
+[INFO] T E S T S
+
+[INFO] Running decorator.DecoratorTest
+[INFO] Tests run: 3,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0  ✓  data_management.WebSocketDataReaderTest
+[INFO] Tests run: 7,  Failures: 0, Errors: 0, Skipped: 0  ✓  data_management.WebSocketIntegrationTest
+[INFO] Tests run: 1,  Failures: 0, Errors: 0, Skipped: 0  ✓  data_management.DataStorageTest
+
+[INFO] Running alerts.AlertGeneratorHypotensiveHypoxemiaTest
+[ERROR] Tests run: 8, Failures: 4  <<<  (pre-existing, unrelated to this work)
+
+[INFO] Running alerts.AlertGeneratorBloodSaturationTest
+[INFO] Tests run: 8,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Running alerts.AlertGeneratorECGTest
+[INFO] Tests run: 8,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Running alerts.AlertGeneratorManualAlertTest
+[INFO] Tests run: 3,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Running alerts.AlertGeneratorBloodPressureTest
+[INFO] Tests run: 8,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Running singleton.DataStorageSingletonTest
+[INFO] Tests run: 2,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Running factory.AlertFactoryTest
+[INFO] Tests run: 3,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Running strategy.HeartRateStrategyTest
+[INFO] Tests run: 3,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Running strategy.BloodPressureStrategyTest
+[INFO] Tests run: 5,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] Running strategy.OxygenSaturationStrategyTest
+[INFO] Tests run: 4,  Failures: 0, Errors: 0, Skipped: 0  ✓
+
+[INFO] -------------------------------------------------------
+[INFO] Total time: 10.9 s
+[ERROR] Tests run: 75, Failures: 4

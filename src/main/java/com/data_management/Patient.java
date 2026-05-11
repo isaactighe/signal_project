@@ -1,6 +1,7 @@
 package com.data_management;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,11 +22,14 @@ public class Patient {
      */
     public Patient(int patientId) {
         this.patientId = patientId;
-        this.patientRecords = new ArrayList<>();
+        // synchronized list because websocket messages can add records from multiple threads
+        this.patientRecords = Collections.synchronizedList(new ArrayList<>());
     }
+
     public int getPatientId() {
         return patientId;
     }
+
     /**
      * Adds a new record to this patient's list of medical records.
      * The record is created with the specified measurement value, record type, and
@@ -55,9 +59,13 @@ public class Patient {
      */
     public List<PatientRecord> getRecords(long startTime, long endTime) {
         List<PatientRecord> filtered = new ArrayList<>();
-        for (PatientRecord record: patientRecords) {
-            if (record.getTimestamp() >= startTime && record.getTimestamp() <= endTime) {
-                filtered.add(record);
+        // synchronized block required when iterating a synchronizedList — without this
+        // another thread adding a record mid-loop would throw ConcurrentModificationException
+        synchronized (patientRecords) {
+            for (PatientRecord record : patientRecords) {
+                if (record.getTimestamp() >= startTime && record.getTimestamp() <= endTime) {
+                    filtered.add(record);
+                }
             }
         }
         return filtered;
