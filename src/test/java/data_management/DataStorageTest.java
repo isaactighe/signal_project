@@ -12,24 +12,10 @@ class DataStorageTest {
 
     @Test
     void testAddAndGetRecords() {
-
-        List<PatientRecord> mockData = List.of(
-                new PatientRecord(1, 100.0, "WhiteBloodCells", 1714376789050L),
-                new PatientRecord(1, 200.0, "WhiteBloodCells", 1714376789051L)
-        );
-
-        DataReader reader = new MockDataReader(mockData);
-
+        // basic smoke test — add two records for the same patient and check both come back
         DataStorage storage = DataStorage.getInstance();
-
-        for (PatientRecord record : reader.read()) {
-            storage.addPatientData(
-                    record.getPatientId(),
-                    record.getMeasurementValue(),
-                    record.getRecordType(),
-                    record.getTimestamp()
-            );
-        }
+        storage.addPatientData(1, 100.0, "WhiteBloodCells", 1714376789050L);
+        storage.addPatientData(1, 200.0, "WhiteBloodCells", 1714376789051L);
 
         List<PatientRecord> records =
                 storage.getRecords(1, 1714376789050L, 1714376789051L);

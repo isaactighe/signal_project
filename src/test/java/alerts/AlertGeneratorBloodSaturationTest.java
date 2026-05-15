@@ -35,6 +35,7 @@ class AlertGeneratorBloodSaturationTest {
 
     @Test
     void testLowSaturationBelowThreshold() {
+        // 91% is below the 92% danger threshold — a low saturation alert should fire
         long baseTime = System.currentTimeMillis();
         dataStorage.addPatientData(PATIENT_ID, 91, "Saturation", baseTime);
         alertGenerator.evaluateData(testPatient);
@@ -42,6 +43,7 @@ class AlertGeneratorBloodSaturationTest {
 
     @Test
     void testLowSaturationAtThreshold() {
+        // 92% is right at the boundary — checks whether the threshold is inclusive or exclusive
         long baseTime = System.currentTimeMillis();
         dataStorage.addPatientData(PATIENT_ID, 92, "Saturation", baseTime);
         alertGenerator.evaluateData(testPatient);
@@ -49,6 +51,7 @@ class AlertGeneratorBloodSaturationTest {
 
     @Test
     void testNormalSaturation() {
+        // 95% is well within the safe range — no alert should be raised
         long baseTime = System.currentTimeMillis();
         dataStorage.addPatientData(PATIENT_ID, 95, "Saturation", baseTime);
         alertGenerator.evaluateData(testPatient);
@@ -56,6 +59,7 @@ class AlertGeneratorBloodSaturationTest {
 
     @Test
     void testRapidDropWithin10Minutes() {
+        // a 5% drop from 98 to 93 within 5 minutes should trigger a rapid-drop alert
         long baseTime = System.currentTimeMillis();
         dataStorage.addPatientData(PATIENT_ID, 98, "Saturation", baseTime);
         dataStorage.addPatientData(PATIENT_ID, 93, "Saturation", baseTime + 300000); // 5 min, 5% drop
@@ -64,6 +68,7 @@ class AlertGeneratorBloodSaturationTest {
 
     @Test
     void testRapidDropExactly5Percent() {
+        // exactly 5% drop is the boundary case — verifies the threshold is inclusive
         long baseTime = System.currentTimeMillis();
         dataStorage.addPatientData(PATIENT_ID, 100, "Saturation", baseTime);
         dataStorage.addPatientData(PATIENT_ID, 95, "Saturation", baseTime + 300000); // exactly 5% drop
@@ -72,6 +77,7 @@ class AlertGeneratorBloodSaturationTest {
 
     @Test
     void testRapidDropBeyond10Minutes() {
+        // the same 5% drop but spread over 11 minutes — outside the detection window, no alert expected
         long baseTime = System.currentTimeMillis();
         dataStorage.addPatientData(PATIENT_ID, 98, "Saturation", baseTime);
         dataStorage.addPatientData(PATIENT_ID, 93, "Saturation", baseTime + 660000); // 11 min, 5% drop
@@ -80,6 +86,7 @@ class AlertGeneratorBloodSaturationTest {
 
     @Test
     void testSmallDropWithin10Minutes() {
+        // only 4% drop in 5 minutes — not enough to clear the 5% threshold, no alert
         long baseTime = System.currentTimeMillis();
         dataStorage.addPatientData(PATIENT_ID, 98, "Saturation", baseTime);
         dataStorage.addPatientData(PATIENT_ID, 94, "Saturation", baseTime + 300000); // 4% drop
@@ -88,6 +95,7 @@ class AlertGeneratorBloodSaturationTest {
 
     @Test
     void testRapidDropWith3Readings() {
+        // the drop is spread across three readings but the total from first to last exceeds 5% within the window
         long baseTime = System.currentTimeMillis();
         dataStorage.addPatientData(PATIENT_ID, 98, "Saturation", baseTime);
         dataStorage.addPatientData(PATIENT_ID, 96, "Saturation", baseTime + 180000); // 2% drop

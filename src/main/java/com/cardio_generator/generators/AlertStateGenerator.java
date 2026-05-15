@@ -7,7 +7,7 @@ import com.cardio_generator.outputs.OutputStrategy;
 public class AlertStateGenerator implements PatientDataGenerator {
     // random generator should not be public
     // should also user upper snake case:
-    private static final Random RANDOM_GENERATOR = new Random();
+    private static final Random randomGenerator = new Random();
     // AlertStates must be lower camel case
     private boolean[] alertStates; // false = resolved, true = pressed
 
@@ -19,7 +19,7 @@ public class AlertStateGenerator implements PatientDataGenerator {
     public void generate(int patientId, OutputStrategy outputStrategy) {
         try {
             if (alertStates[patientId]) {
-                if (RANDOM_GENERATOR.nextDouble() < 0.9) { // 90% chance to resolve
+                if (randomGenerator.nextDouble() < 0.9) { // 90% chance to resolve
                     alertStates[patientId] = false;
                     // Output the alert
                     outputStrategy.output(patientId, System.currentTimeMillis(), "Alert", "resolved");
@@ -28,7 +28,7 @@ public class AlertStateGenerator implements PatientDataGenerator {
                 // lambda should be lower camel case
                 double lambda = 0.1; // Average rate (alerts per period), adjust based on desired frequency
                 double p = -Math.expm1(-lambda); // Probability of at least one alert in the period
-                boolean alertTriggered = RANDOM_GENERATOR.nextDouble() < p;
+                boolean alertTriggered = randomGenerator.nextDouble() < p;
 
                 if (alertTriggered) {
                     alertStates[patientId] = true;

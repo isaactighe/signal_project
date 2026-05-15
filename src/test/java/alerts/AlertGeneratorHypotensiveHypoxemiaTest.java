@@ -52,12 +52,9 @@ class AlertGeneratorHypotensiveHypoxemiaTest {
         return out.toString();
     }
 
-    // ---------------------------
-    // TEST CASES
-    // ---------------------------
-
     @Test
     void testHypotensiveHypoxemiaBothConditions() {
+        // both systolic bp below 90 and saturation below 92% are present — the combined alert must fire
         long time = System.currentTimeMillis();
 
         dataStorage.addPatientData(PATIENT_ID, 85, "SystolicBP", time);
@@ -72,6 +69,7 @@ class AlertGeneratorHypotensiveHypoxemiaTest {
 
     @Test
     void testHypotensiveHypoxemiaLowBPOnly() {
+        // low bp alone is not enough — saturation is fine, so the combined alert should not appear
         long time = System.currentTimeMillis();
 
         dataStorage.addPatientData(PATIENT_ID, 85, "SystolicBP", time);
@@ -86,6 +84,7 @@ class AlertGeneratorHypotensiveHypoxemiaTest {
 
     @Test
     void testHypotensiveHypoxemiaLowSaturationOnly() {
+        // low saturation alone is not enough — bp is normal, so the combined alert should not appear
         long time = System.currentTimeMillis();
 
         dataStorage.addPatientData(PATIENT_ID, 110, "SystolicBP", time);
@@ -100,6 +99,7 @@ class AlertGeneratorHypotensiveHypoxemiaTest {
 
     @Test
     void testHypotensiveHypoxemiaNormalBoth() {
+        // both readings are comfortably within safe ranges — no alert of any kind expected
         long time = System.currentTimeMillis();
 
         dataStorage.addPatientData(PATIENT_ID, 120, "SystolicBP", time);
@@ -114,6 +114,7 @@ class AlertGeneratorHypotensiveHypoxemiaTest {
 
     @Test
     void testHypotensiveHypoxemiaAtBoundaryBoth() {
+        // bp at 89 (just below 90) and saturation at 91 (just below 92) — both cross the line, alert fires
         long time = System.currentTimeMillis();
 
         dataStorage.addPatientData(PATIENT_ID, 89, "SystolicBP", time);
@@ -128,6 +129,8 @@ class AlertGeneratorHypotensiveHypoxemiaTest {
 
     @Test
     void testHypotensiveHypoxemiaAtBoundaryBPNotSaturation() {
+        // bp at 89 triggers the bp side, but saturation at 92 is right at the threshold and should not
+        // — this checks the exact boundary behaviour of the saturation check
         long time = System.currentTimeMillis();
 
         dataStorage.addPatientData(PATIENT_ID, 89, "SystolicBP", time);
@@ -142,6 +145,7 @@ class AlertGeneratorHypotensiveHypoxemiaTest {
 
     @Test
     void testHypotensiveHypoxemiaMultipleReadings() {
+        // multiple readings over time where at least one pair meets both conditions simultaneously
         long time = System.currentTimeMillis();
 
         dataStorage.addPatientData(PATIENT_ID, 85, "SystolicBP", time);
@@ -158,6 +162,7 @@ class AlertGeneratorHypotensiveHypoxemiaTest {
 
     @Test
     void testHypotensiveHypoxemiaCriticalValues() {
+        // both values are well beyond the danger threshold — a clear-cut case that must always trigger
         long time = System.currentTimeMillis();
 
         dataStorage.addPatientData(PATIENT_ID, 70, "SystolicBP", time);
