@@ -1,7 +1,9 @@
 package decorator;
 
-import com.alerts.*;
-import com.alerts.decorators.*;
+import com.alerts.Alert;
+import com.alerts.BloodOxygenAlert;
+import com.alerts.decorators.PriorityAlertDecorator;
+import com.alerts.decorators.RepeatedAlertDecorator;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -12,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class DecoratorTest {
 
     @Test
-    void testPriorityDecoratorAddsPriority() {
+    void testPriorityDecoratorDoesNotBreakAlert() {
 
-        Alert alert = new BasicAlert(
+        Alert alert = new BloodOxygenAlert(
                 "1",
                 "Test condition",
                 System.currentTimeMillis()
@@ -23,12 +25,13 @@ class DecoratorTest {
         alert = new PriorityAlertDecorator(alert, "HIGH");
 
         assertNotNull(alert);
+        assertEquals("Test condition", alert.getCondition());
     }
 
     @Test
-    void testRepeatedDecoratorWrapsAlert() {
+    void testRepeatedDecoratorDoesNotBreakAlert() {
 
-        Alert alert = new BasicAlert(
+        Alert alert = new BloodOxygenAlert(
                 "1",
                 "Test condition",
                 System.currentTimeMillis()
@@ -37,15 +40,16 @@ class DecoratorTest {
         alert = new RepeatedAlertDecorator(alert, 3);
 
         assertNotNull(alert);
+        assertEquals("Test condition", alert.getCondition());
     }
 
     @Test
-    void testDecoratorOutputModification() {
+    void testDecoratorStillPreservesOutput() {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        Alert alert = new BasicAlert(
+        Alert alert = new BloodOxygenAlert(
                 "1",
                 "Test condition",
                 System.currentTimeMillis()
