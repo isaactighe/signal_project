@@ -1,6 +1,6 @@
 package com.alerts;
 
-public class BasicAlert implements Alert {
+public abstract class BasicAlert implements Alert {
 
     private final String patientId;
     private final String condition;
@@ -29,8 +29,4 @@ public class BasicAlert implements Alert {
         return timestamp;
     }
 
-    @Override
-    public String getType() {
-        return "";
-    }
 }

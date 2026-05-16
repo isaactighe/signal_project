@@ -27,7 +27,7 @@ public class AlertGenerator {
                         .getRecords(patient.getPatientId(), start, end);
 
         for (AlertStrategy s : strategies) {
-            s.checkAlert(patient, records, this);
+            s.checkAlert(patient, records);
         }
     }
 

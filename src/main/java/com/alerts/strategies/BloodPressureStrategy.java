@@ -1,12 +1,14 @@
 package com.alerts.strategies;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.alerts.*;
+import com.alerts.Alert;
 import com.alerts.decorators.PriorityAlertDecorator;
 import com.alerts.decorators.RepeatedAlertDecorator;
-import com.alerts.factories.*;
+import com.alerts.factories.AlertFactory;
+import com.alerts.factories.BloodPressureAlertFactory;
 import com.data_management.Patient;
 import com.data_management.PatientRecord;
 
@@ -15,9 +17,10 @@ public class BloodPressureStrategy implements AlertStrategy {
     private final AlertFactory factory = new BloodPressureAlertFactory();
 
     @Override
-    public void checkAlert(Patient patient,
-                           List<PatientRecord> records,
-                           AlertGenerator generator) {
+    public List<Alert> checkAlert(Patient patient,
+                                  List<PatientRecord> records) {
+
+        List<Alert> alerts = new ArrayList<>();
 
         String patientId = String.valueOf(patient.getPatientId());
 
@@ -31,7 +34,9 @@ public class BloodPressureStrategy implements AlertStrategy {
 
         // thresholds
         for (PatientRecord r : systolic) {
-            if (r.getMeasurementValue() > 180 || r.getMeasurementValue() < 90) {
+
+            if (r.getMeasurementValue() > 180
+                    || r.getMeasurementValue() < 90) {
 
                 Alert alert = factory.createAlert(
                         patientId,
@@ -39,14 +44,19 @@ public class BloodPressureStrategy implements AlertStrategy {
                         r.getTimestamp()
                 );
 
-                alert = new PriorityAlertDecorator(alert, "CRITICAL");
+                alert = new PriorityAlertDecorator(
+                        alert,
+                        "CRITICAL"
+                );
 
-                generator.triggerAlert(alert);
+                alerts.add(alert);
             }
         }
 
         for (PatientRecord r : diastolic) {
-            if (r.getMeasurementValue() > 120 || r.getMeasurementValue() < 60) {
+
+            if (r.getMeasurementValue() > 120
+                    || r.getMeasurementValue() < 60) {
 
                 Alert alert = factory.createAlert(
                         patientId,
@@ -54,23 +64,43 @@ public class BloodPressureStrategy implements AlertStrategy {
                         r.getTimestamp()
                 );
 
-                alert = new PriorityAlertDecorator(alert, "CRITICAL");
+                alert = new PriorityAlertDecorator(
+                        alert,
+                        "CRITICAL"
+                );
 
-                generator.triggerAlert(alert);
+                alerts.add(alert);
             }
         }
 
-        evaluateTrend(patient, systolic, generator, patientId, "Systolic BP Trend");
-        evaluateTrend(patient, diastolic, generator, patientId, "Diastolic BP Trend");
+        alerts.addAll(
+                evaluateTrend(
+                        systolic,
+                        patientId,
+                        "Systolic BP Trend"
+                )
+        );
+
+        alerts.addAll(
+                evaluateTrend(
+                        diastolic,
+                        patientId,
+                        "Diastolic BP Trend"
+                )
+        );
+
+        return alerts;
     }
 
-    private void evaluateTrend(Patient patient,
-                               List<PatientRecord> records,
-                               AlertGenerator generator,
-                               String patientId,
-                               String condition) {
+    private List<Alert> evaluateTrend(List<PatientRecord> records,
+                                      String patientId,
+                                      String condition) {
 
-        if (records.size() < 3) return;
+        List<Alert> alerts = new ArrayList<>();
+
+        if (records.size() < 3) {
+            return alerts;
+        }
 
         for (int i = 0; i <= records.size() - 3; i++) {
 
@@ -78,8 +108,11 @@ public class BloodPressureStrategy implements AlertStrategy {
             double v2 = records.get(i + 1).getMeasurementValue();
             double v3 = records.get(i + 2).getMeasurementValue();
 
-            boolean increasing = (v2 - v1 > 10 && v3 - v2 > 10);
-            boolean decreasing = (v1 - v2 > 10 && v2 - v3 > 10);
+            boolean increasing =
+                    (v2 - v1 > 10 && v3 - v2 > 10);
+
+            boolean decreasing =
+                    (v1 - v2 > 10 && v2 - v3 > 10);
 
             if (increasing || decreasing) {
 
@@ -89,11 +122,20 @@ public class BloodPressureStrategy implements AlertStrategy {
                         records.get(i + 2).getTimestamp()
                 );
 
-                alert = new PriorityAlertDecorator(alert, "MEDIUM");
-                alert = new RepeatedAlertDecorator(alert, 2);
+                alert = new PriorityAlertDecorator(
+                        alert,
+                        "MEDIUM"
+                );
 
-                generator.triggerAlert(alert);
+                alert = new RepeatedAlertDecorator(
+                        alert,
+                        2
+                );
+
+                alerts.add(alert);
             }
         }
+
+        return alerts;
     }
 }

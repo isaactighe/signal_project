@@ -1,24 +1,29 @@
 package com.alerts.strategies;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.alerts.*;
+import com.alerts.Alert;
 import com.alerts.decorators.PriorityAlertDecorator;
-import com.alerts.factories.*;
+import com.alerts.factories.AlertFactory;
+import com.alerts.factories.BloodOxygenAlertFactory;
 import com.data_management.Patient;
 import com.data_management.PatientRecord;
 
 public class OxygenSaturationStrategy implements AlertStrategy {
 
-    private final AlertFactory factory = new BloodOxygenAlertFactory();
+    private final AlertFactory factory =
+            new BloodOxygenAlertFactory();
 
     @Override
-    public void checkAlert(Patient patient,
-                           List<PatientRecord> records,
-                           AlertGenerator generator) {
+    public List<Alert> checkAlert(Patient patient,
+                                  List<PatientRecord> records) {
 
-        String patientId = String.valueOf(patient.getPatientId());
+        List<Alert> alerts = new ArrayList<>();
+
+        String patientId =
+                String.valueOf(patient.getPatientId());
 
         List<PatientRecord> saturation = records.stream()
                 .filter(r -> r.getRecordType().equals("Saturation"))
@@ -34,19 +39,30 @@ public class OxygenSaturationStrategy implements AlertStrategy {
                         r.getTimestamp()
                 );
 
-                alert = new PriorityAlertDecorator(alert, "HIGH");
+                alert = new PriorityAlertDecorator(
+                        alert,
+                        "HIGH"
+                );
 
-                generator.triggerAlert(alert);
+                alerts.add(alert);
             }
         }
 
-        checkRapidDrop(patient, saturation, generator, patientId);
+        alerts.addAll(
+                checkRapidDrop(
+                        saturation,
+                        patientId
+                )
+        );
+
+        return alerts;
     }
 
-    private void checkRapidDrop(Patient patient,
-                                List<PatientRecord> saturation,
-                                AlertGenerator generator,
-                                String patientId) {
+    private List<Alert> checkRapidDrop(
+            List<PatientRecord> saturation,
+            String patientId) {
+
+        List<Alert> alerts = new ArrayList<>();
 
         long tenMinutes = 10 * 60 * 1000;
 
@@ -55,8 +71,13 @@ public class OxygenSaturationStrategy implements AlertStrategy {
             PatientRecord current = saturation.get(i);
             PatientRecord next = saturation.get(i + 1);
 
-            long diff = next.getTimestamp() - current.getTimestamp();
-            double drop = current.getMeasurementValue() - next.getMeasurementValue();
+            long diff =
+                    next.getTimestamp()
+                            - current.getTimestamp();
+
+            double drop =
+                    current.getMeasurementValue()
+                            - next.getMeasurementValue();
 
             if (diff <= tenMinutes && drop >= 5) {
 
@@ -66,10 +87,15 @@ public class OxygenSaturationStrategy implements AlertStrategy {
                         next.getTimestamp()
                 );
 
-                alert = new PriorityAlertDecorator(alert, "CRITICAL");
+                alert = new PriorityAlertDecorator(
+                        alert,
+                        "CRITICAL"
+                );
 
-                generator.triggerAlert(alert);
+                alerts.add(alert);
             }
         }
+
+        return alerts;
     }
 }
